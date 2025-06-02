@@ -2,13 +2,14 @@ import os
 import requests
 import json
 import smtplib
+import configparser
 from email.mime.text import MIMEText
 
 
-subject = "Release Service update"
-sender = "theflockers@gmail.com"
-recipients = "lmendes@redhat.com"
-password = open("%s/gmail-pass.txt" % os.getenv("HOME")).read()
+def load_config(config_file):
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    return config
 
 
 def print_contents(contents):
@@ -40,9 +41,13 @@ def get_envelope(sender, recipient, subject, html):
     return msg
 
 
-def email(sender, subject, recipient, text):
+def email(sender, subject, recipient, text, server):
+    password = open("%s/gmail-pass.txt" % os.getenv("HOME")).read()
     msg = get_envelope(sender, recipient, subject, text)
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
+    with smtplib.SMTP_SSL(
+        server["smtphost"],
+        server["smtpport"]
+    ) as smtp_server:
         smtp_server.login(sender, password.strip())
         smtp_server.sendmail(sender, recipient, msg.as_string())
 
@@ -65,7 +70,11 @@ def main():
 
     response = ask_gemini(GEMINI_API, GEMINI_API_KEY, question)
     print(response)
-    email(sender, subject, recipients, print_contents(response))
+    config = load_config("config.ini")
+    envelope = config["envelope"]
+    server = config["server"]
+    email(envelope["sender"], envelope["subject"], envelope["recipients"],
+          print_contents(response), server)
 
 
 if __name__ == "__main__":
