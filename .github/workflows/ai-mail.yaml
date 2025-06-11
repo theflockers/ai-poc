@@ -1,0 +1,31 @@
+name: AI POC E-mail
+on:
+  workflow_dispatch:
+    inputs:
+      SENDER:
+        type: string
+        required: true
+      RECIPIENTS:
+        type: string
+        required: true
+jobs:
+  pull-and-email:
+    name: Pull GitHub and send commit log e-mail
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run AI Poc script
+        run: |
+          python main.py
+        env:
+          MAIL_SMTPPORT: 465
+          MAIL_SMTPHOST: smtp.gmail.com
+          MAIL_SMTPPASS: ${{ secrets.SMTPPASS }}
+          MAIL_RECIPIENTS: ${{ inputs.RECIPIENTS }}
+          MAIL_SENDER: ${{ inputs.SENDER }}
+          MAIL_SMTPSERVER: smtp.gmail.com
+          MAIL_SUBJECT: Release Service Update
+          GIT_REPO: https://github.com/konflux-ci/release-service-catalog.git
+          GIT_API_KEY: ${{ secrets.GIT_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
